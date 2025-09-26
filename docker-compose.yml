@@ -7,16 +7,28 @@ services:
       ACCEPT_EULA: "Y"
     ports:
       - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
     healthcheck:
       test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "Your_password123", "-Q", "SELECT 1"]
       interval: 10s
       retries: 10
+    restart: always
+    networks:
+      - ecommerce-network
 
   rabbitmq:
     image: rabbitmq:3-management
     ports:
       - "5672:5672"
       - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      retries: 10
+    restart: always
+    networks:
+      - ecommerce-network
 
   inventory:
     build: ./inventory
@@ -30,12 +42,16 @@ services:
       - Jwt__Issuer=ecommerce.local
     ports:
       - "5101:80"
+    restart: always
+    networks:
+      - ecommerce-network
 
   sales:
     build: ./sales
     depends_on:
       - sqlserver
       - rabbitmq
+      - inventory
     environment:
       - ConnectionStrings__Default=Server=sqlserver;Database=SalesDb;User Id=sa;Password=Your_password123;
       - RabbitMq__Host=rabbitmq
@@ -44,6 +60,9 @@ services:
       - Jwt__Issuer=ecommerce.local
     ports:
       - "5201:80"
+    restart: always
+    networks:
+      - ecommerce-network
 
   gateway:
     build: ./gateway
@@ -52,3 +71,13 @@ services:
       - sales
     ports:
       - "5000:80"
+    restart: always
+    networks:
+      - ecommerce-network
+
+volumes:
+  sql_data:
+
+networks:
+  ecommerce-network:
+    driver: bridge

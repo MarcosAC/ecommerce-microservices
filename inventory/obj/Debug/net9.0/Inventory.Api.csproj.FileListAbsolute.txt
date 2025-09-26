@@ -165,3 +165,4 @@ C:\Projetos\BootCamp\Avanade\ecommerce-microservices\inventory\obj\Debug\net9.0\
 C:\Projetos\BootCamp\Avanade\ecommerce-microservices\inventory\obj\Debug\net9.0\Inventory.Api.pdb
 C:\Projetos\BootCamp\Avanade\ecommerce-microservices\inventory\obj\Debug\net9.0\Inventory.Api.genruntimeconfig.cache
 C:\Projetos\BootCamp\Avanade\ecommerce-microservices\inventory\obj\Debug\net9.0\ref\Inventory.Api.dll
+C:\Projetos\BootCamp\Avanade\ecommerce-microservices\inventory\obj\Debug\net9.0\Inventory.Api.sourcelink.json

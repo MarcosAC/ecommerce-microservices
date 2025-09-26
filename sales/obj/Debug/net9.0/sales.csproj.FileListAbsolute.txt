@@ -165,3 +165,4 @@ C:\Projetos\BootCamp\Avanade\ecommerce-microservices\sales\obj\Debug\net9.0\refi
 C:\Projetos\BootCamp\Avanade\ecommerce-microservices\sales\obj\Debug\net9.0\sales.pdb
 C:\Projetos\BootCamp\Avanade\ecommerce-microservices\sales\obj\Debug\net9.0\sales.genruntimeconfig.cache
 C:\Projetos\BootCamp\Avanade\ecommerce-microservices\sales\obj\Debug\net9.0\ref\sales.dll
+C:\Projetos\BootCamp\Avanade\ecommerce-microservices\sales\obj\Debug\net9.0\sales.sourcelink.json

@@ -4,19 +4,31 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore;
 using Sales.Api.Data;
 using Sales.Api.Services;
+using Serilog;
 using Inventory.Api.Messaging;
 
 var builder = WebApplication.CreateBuilder(args);
-var config = builder.Configuration;
+
+builder.Host.UseSerilog((context, config) =>
+{
+    config.WriteTo.Console()
+          .WriteTo.File("logs/sales-log-.txt", rollingInterval: RollingInterval.Day);
+});
+
+var configuration = builder.Configuration;
 
 builder.Services.AddDbContext<SalesDbContext>(opt =>
-    opt.UseSqlServer(config.GetConnectionString("Default")));
+    opt.UseSqlServer(configuration.GetConnectionString("Default")));
 
 builder.Services.AddSingleton<RabbitMqPublisher>();
-builder.Services.AddHttpClient("inventory"); // HttpClientFactory
+builder.Services.AddHttpClient("inventory"); 
 builder.Services.AddScoped<PedidoService>();
 
-var key = Encoding.UTF8.GetBytes(config["Jwt:Key"]);
+var jwtKey = configuration["Jwt:Key"] ?? "CHAVE_SUPER_SECRETA_FALLBACK";
+var jwtIssuer = configuration["Jwt:Issuer"] ?? "sales.local";
+
+var key = Encoding.UTF8.GetBytes(jwtKey);
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -31,8 +43,8 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = config["Jwt:Issuer"],
-        ValidAudience = config["Jwt:Issuer"],
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtIssuer,
         IssuerSigningKey = new SymmetricSecurityKey(key)
     };
 });
@@ -44,11 +56,18 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// apply migrations
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<SalesDbContext>();
-    db.Database.Migrate();
+    try
+    {
+        db.Database.Migrate();
+        Log.Information("Migrações aplicadas com sucesso no banco de dados SalesDbContext.");
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "Erro ao aplicar migrações no SalesDbContext.");
+    }
 }
 
 if (app.Environment.IsDevelopment())
@@ -56,6 +75,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
