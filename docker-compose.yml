@@ -1,0 +1,54 @@
+version: '3.8'
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      SA_PASSWORD: "Your_password123"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "Your_password123", "-Q", "SELECT 1"]
+      interval: 10s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  inventory:
+    build: ./inventory
+    depends_on:
+      - sqlserver
+      - rabbitmq
+    environment:
+      - ConnectionStrings__Default=Server=sqlserver;Database=InventoryDb;User Id=sa;Password=Your_password123;
+      - RabbitMq__Host=rabbitmq
+      - Jwt__Key=MINHA_CHAVE_SECRETA_MUITO_SECRETA_123456
+      - Jwt__Issuer=ecommerce.local
+    ports:
+      - "5101:80"
+
+  sales:
+    build: ./sales
+    depends_on:
+      - sqlserver
+      - rabbitmq
+    environment:
+      - ConnectionStrings__Default=Server=sqlserver;Database=SalesDb;User Id=sa;Password=Your_password123;
+      - RabbitMq__Host=rabbitmq
+      - Inventory__BaseUrl=http://inventory
+      - Jwt__Key=MINHA_CHAVE_SECRETA_MUITO_SECRETA_123456
+      - Jwt__Issuer=ecommerce.local
+    ports:
+      - "5201:80"
+
+  gateway:
+    build: ./gateway
+    depends_on:
+      - inventory
+      - sales
+    ports:
+      - "5000:80"
